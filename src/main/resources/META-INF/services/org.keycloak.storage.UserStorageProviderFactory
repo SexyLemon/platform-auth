@@ -1,1 +1,1 @@
-com.micromap.auth.keycloak.storage.PropertyFileUserStorageProviderFactory
+com.micromap.auth.keycloak.storage.JpaUserStorageProviderFactory

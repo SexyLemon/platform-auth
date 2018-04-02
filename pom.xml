@@ -16,6 +16,10 @@
 
         <keycloak.version>3.4.3.Final</keycloak.version>
         <jboss-logging.version>3.3.2.Final</jboss-logging.version>
+        <wildfly-plugin.version>1.1.0.Final</wildfly-plugin.version>
+        <hibernate-entitymanager.version>5.1.10.Final</hibernate-entitymanager.version>
+        <hibernate-javax-persistence.version>1.0.0.Final</hibernate-javax-persistence.version>
+        <jboss-ejb-api.version>1.0.0.Final</jboss-ejb-api.version>
     </properties>
     <dependencies>
         <dependency>
@@ -42,6 +46,102 @@
             <version>${keycloak.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.hibernate.javax.persistence</groupId>
+            <artifactId>hibernate-jpa-2.1-api</artifactId>
+            <version>${hibernate-javax-persistence.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-entitymanager</artifactId>
+            <version>${hibernate-entitymanager.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.spec.javax.ejb</groupId>
+            <artifactId>jboss-ejb-api_3.2_spec</artifactId>
+            <version>${jboss-ejb-api.version}</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
+
+    <build>
+        <finalName>user-storage-jpa</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.wildfly.plugins</groupId>
+                <artifactId>wildfly-maven-plugin</artifactId>
+                <version>${wildfly-plugin.version}</version>
+                <configuration>
+                    <skip>false</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    <profiles>
+        <!-- this profile deploys an XA H2 datasource connection.  It is in-memory only, so rebooting the server will lose
+             your changes.  Run type: mvn -Padd-datasource install.  THis can only be run once.  If you run it again
+             you'll get an error that the datasource already exists -->
+        <profile>
+            <id>add-datasource</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.wildfly.plugins</groupId>
+                        <artifactId>wildfly-maven-plugin</artifactId>
+                        <version>${wildfly-plugin.version}</version>
+                        <configuration>
+                            <skip>false</skip>
+                            <force>true</force>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>add-datasource</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>add-resource</goal>
+                                </goals>
+                                <configuration>
+                                    <force/>
+                                    <address>subsystem=datasources</address>
+                                    <resources>
+                                        <resource>
+                                            <address>xa-data-source=SQLServerDS</address>
+                                            <properties>
+                                                <jndi-name>java:jboss/datasources/SQLServerDS</jndi-name>
+                                                <enabled>true</enabled>
+                                                <driver-name>sqlserver</driver-name>
+                                            </properties>
+                                            <resources>
+                                                <resource>
+                                                    <address>
+                                                        xa-datasource-properties=URL
+                                                    </address>
+                                                    <properties>
+                                                        <value>
+                                                            jdbc:sqlserver://124.133.55.202:8527;DatabaseName=IntegratedPlatform
+                                                        </value>
+                                                    </properties>
+                                                </resource>
+                                            </resources>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
